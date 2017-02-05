@@ -145,7 +145,7 @@ def parseline(line):
         ts = getts(l)
         log(msgfmt.format(time=time.strftime("%H:%M:%S", ts),
                           nick=l["from"],
-                          message=["msg"]),
+                          msg=["message"]),
             server=servers[l["cid"]]["name"],
             channel=l["chan"],
             date=time.strftime("%Y-%m-%d", ts))
@@ -154,7 +154,7 @@ def parseline(line):
         ts = getts(l)
         log(mefmt.format(time=time.strftime("%H:%M:%S", ts),
                          nick=l["from"],
-                         message=["msg"]),
+                         msg=["message"]),
             server=servers[l["cid"]]["name"],
             channel=l["chan"],
             date=time.strftime("%Y-%m-%d", ts))
@@ -167,7 +167,7 @@ def parseline(line):
             fromusr = l["target"]
         log(noticefmt.format(time=time.strftime("%H:%M:%S", ts),
                              nick=l["from"],
-                             message=["msg"]),
+                             msg=["message"]),
             server=servers[l["cid"]]["name"],
             channel=fromusr,
             date=time.strftime("%Y-%m-%d", ts))
@@ -254,7 +254,7 @@ def parseline(line):
                              nick=l["nick"],
                              usermask=l["from_mask"],
                              chan=l["chan"],
-                             message=["msg"]),
+                             msg=["message"]),
             server=servers[l["cid"]]["name"],
             channel=l["chan"],
             date=time.strftime("%Y-%m-%d", ts))
@@ -268,7 +268,7 @@ def parseline(line):
                              nick=l["nick"],
                              chan=l["chan"],
                              kicker=l["kicker"],
-                             message=["msg"]),
+                             msg=["message"]),
             server=servers[l["cid"]]["name"],
             channel=l["chan"],
             date=time.strftime("%Y-%m-%d", ts))
@@ -281,7 +281,7 @@ def parseline(line):
         log(chkickfmt.format(time=time.strftime("%H:%M:%S", ts),
                              nick=l["nick"],
                              usermask=l["from_mask"],
-                             message=["msg"]),
+                             msg=["message"]),
             server=servers[l["cid"]]["name"],
             channel=buffers[l["bid"]]["name"],
             date=time.strftime("%Y-%m-%d", ts))
