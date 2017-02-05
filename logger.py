@@ -54,23 +54,25 @@ def streamiter(cookie):
                                      header=["Cookie: session=%s" % cookie],
                                      origin="https://api.irccloud.com")
     while 1:
-        msg = ws.recv()
-        if msg:
-            yield json.loads(msg)
+        message = ws.recv()
+        if message:
+            yield json.loads(message)
 
 
 def parseline(line):
-    msgfmt = u"{time} <{nick}> {msg}"
-    mefmt = u"{time} * {nick} {msg}"
-    noticefmt = u"{time} -{nick}- {msg}"
-    topicfmt = u"{time} -!- {nick} changed the topic of {chan} to: {msg}"
+    messagefmt = u"{time} <{nick}> {message}"
+    mefmt = u"{time} * {nick} {message}"
+    noticefmt = u"{time} -{nick}- {message}"
+    topicfmt = u"{time} -!- {nick} changed the topic of {chan} to: {message}"
     chjoinfmt = u"{time} -!- {nick} [{usermask}] has joined {chan}"
-    chpartfmt = u"{time} -!- {nick} [{usermask}] has left {chan} [{msg}]"
-    chkickfmt = u"{time} -!- {nick} was kicked from {chan} by {kicker} [{msg}]"
-    chquitfmt = u"{time} -!- {nick} [{usermask}] has quit [{msg}]"
+    chpartfmt = u"{time} -!- {nick} [{usermask}] has left {chan} [{message}]"
+    chkickfmt = u"{time} -!- {nick} was kicked from {chan} by {kicker} [{message}]"
+    chquitfmt = u"{time} -!- {nick} [{usermask}] has quit [{message}]"
     chnickfmt = u"{time} {old_nick} is now known as {new_nick}"
+    elk = 'http://listener.logz.io:8070/?token=FEiuzBgPWkTwygyJvsAGWHGFhmTXOnEY&type=IRC'
     with open("rawlog.json", "a") as f:
         f.write(json.dumps(line) + "\n")
+        r = requests.post(elk, json.dumps(line))
     if not "eid" in line:
         print "Authentication failed, please check your credentials. Use either email/password or the session cookie from irccloud.com"
         sys.exit(1)
@@ -139,20 +141,20 @@ def parseline(line):
     def p_heartbeat_echo(l):
         """ Do nothing """
 
-    def p_buffer_msg(l):
+    def p_buffer_message(l):
         ts = getts(l)
-        log(msgfmt.format(time=time.strftime("%H:%M:%S", ts),
+        log(messagefmt.format(time=time.strftime("%H:%M:%S", ts),
                           nick=l["from"],
-                          msg=l["msg"]),
+                          message=l["message"]),
             server=servers[l["cid"]]["name"],
             channel=l["chan"],
             date=time.strftime("%Y-%m-%d", ts))
 
-    def p_buffer_me_msg(l):
+    def p_buffer_me_message(l):
         ts = getts(l)
         log(mefmt.format(time=time.strftime("%H:%M:%S", ts),
                          nick=l["from"],
-                         msg=l["msg"]),
+                         message=l["message"]),
             server=servers[l["cid"]]["name"],
             channel=l["chan"],
             date=time.strftime("%Y-%m-%d", ts))
@@ -165,7 +167,7 @@ def parseline(line):
             fromusr = l["target"]
         log(noticefmt.format(time=time.strftime("%H:%M:%S", ts),
                              nick=l["from"],
-                             msg=l["msg"]),
+                             message=l["message"]),
             server=servers[l["cid"]]["name"],
             channel=fromusr,
             date=time.strftime("%Y-%m-%d", ts))
@@ -228,7 +230,7 @@ def parseline(line):
         """ TODO """
 
     def p_self_away(l):
-        servers[l["cid"]]["away"] = l["away_msg"]
+        servers[l["cid"]]["away"] = l["away_message"]
 
     def p_self_back(l):
         servers[l["cid"]]["away"] = False
@@ -252,7 +254,7 @@ def parseline(line):
                              nick=l["nick"],
                              usermask=l["from_mask"],
                              chan=l["chan"],
-                             msg=l["msg"]),
+                             message=l["message"]),
             server=servers[l["cid"]]["name"],
             channel=l["chan"],
             date=time.strftime("%Y-%m-%d", ts))
@@ -266,7 +268,7 @@ def parseline(line):
                              nick=l["nick"],
                              chan=l["chan"],
                              kicker=l["kicker"],
-                             msg=l["msg"]),
+                             message=l["message"]),
             server=servers[l["cid"]]["name"],
             channel=l["chan"],
             date=time.strftime("%Y-%m-%d", ts))
@@ -279,7 +281,7 @@ def parseline(line):
         log(chkickfmt.format(time=time.strftime("%H:%M:%S", ts),
                              nick=l["nick"],
                              usermask=l["from_mask"],
-                             msg=l["msg"]),
+                             message=l["message"]),
             server=servers[l["cid"]]["name"],
             channel=buffers[l["bid"]]["name"],
             date=time.strftime("%Y-%m-%d", ts))
@@ -351,7 +353,7 @@ class AlreadyLoggedError(Exception):
     pass
 
 
-def log(msg, server="IRCCloud", channel="#feedback",
+def log(message, server="IRCCloud", channel="#feedback",
         date="2013-10-31", ts="00:00:00"):
      # Channel log whitelist
 #    if not channel in ["#list", "#of", "#channels", "#to", "#log"]:
@@ -372,17 +374,17 @@ def log(msg, server="IRCCloud", channel="#feedback",
         with open("logs" + os.sep + server +
                   os.sep + channelb64 + os.sep +
                   date + ".log", "a+") as f:
-            f.write(uni2str(msg) + "\n")
-        print "(S)", date, server + ":" + uni2str(channel), msg
+            f.write(uni2str(message) + "\n")
+        print "(S)", date, server + ":" + uni2str(channel), message
     except OSError as exception:
         print "--- ERROR ---"
         print "Unable to log %s %s:%s %s" % (
-            date, uni2str(server), uni2str(channel), uni2str(msg))
+            date, uni2str(server), uni2str(channel), uni2str(message))
         print "because: " + os.strerror(exception.errno)
     except UnicodeEncodeError as exception:
         print "--- ERROR ---"
         print u"Unable to log %s %s:%s %s" % (
-            date, uni2str(server), uni2str(channel), uni2str(msg))
+            date, uni2str(server), uni2str(channel), uni2str(message))
         print "because: base64 was unable to encode the channel name."
 
 
