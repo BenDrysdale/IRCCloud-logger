@@ -17,6 +17,8 @@ buffers = {}
 whois = {}
 token_uri = "https://www.irccloud.com/chat/auth-formtoken"
 login_uri = "https://www.irccloud.com/chat/login"
+elk = 'http://listener.logz.io:8070/?token=GHmYuKOhyMteyMpIdixrUSwsxUXcbmwA&type=IRC'
+
 
 
 def uni2str(inp):
@@ -71,6 +73,7 @@ def parseline(line):
     chnickfmt = u"{time} {old_nick} is now known as {new_nick}"
     with open("rawlog.json", "a") as f:
         f.write(json.dumps(line) + "\n")
+        r = requests.post(elk, json.dumps(line))
     if not "eid" in line:
         print "Authentication failed, please check your credentials. Use either email/password or the session cookie from irccloud.com"
         sys.exit(1)
